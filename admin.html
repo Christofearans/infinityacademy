@@ -125,13 +125,15 @@
   }
 
   </style>
+
 </head>
 <body>
+
   <header>
-  <h1>Admin Dashboard</h1>
-  <p>Manage registered users and track their activity</p>
-  <button class="button logout-button" onclick="logout()">Logout</button>
-</header>
+    <h1>Admin Dashboard</h1>
+    <p>Manage registered users and track their activity</p>
+    <button class="button logout-button" onclick="logout()">Logout</button>
+  </header>
 
   <div class="container">
     <section class="section">
@@ -149,6 +151,7 @@
         <tbody id="user-table-body"></tbody>
       </table>
     </section>
+
     <section class="section">
       <h2>Create Announcement</h2>
       <form id="announcement-form">
@@ -165,6 +168,7 @@
         <button type="button" class="button" onclick="addAnnouncement()">Add Announcement</button>
       </form>
     </section>
+
     <section class="section">
       <h2>Announcements</h2>
       <table class="announcement-table">
@@ -180,101 +184,94 @@
       </table>
     </section>
   </div>
+
   <div id="user-modal" class="modal">
     <div class="modal-content">
       <div class="modal-header">User Details</div>
       <div class="modal-body" id="user-details"></div>
-      <button class="close-button" onclick="window.location.href='index.html'">Close</button>
+      <button class="close-button" onclick="closeModal()">Close</button>
     </div>
   </div>
 
-
   <script>
+    // Placeholder for the backend connection (like API or database interaction)
+    const fetchUsersFromBackend = () => {
+      // Simulate fetching users from backend (use AJAX, Fetch API, or WebSocket in real-world apps)
+      return JSON.parse(localStorage.getItem("users")) || [];
+    }
+
     const formatText = (command, value = null) => {
-        document.execCommand(command, false, value);
+      document.execCommand(command, false, value);
     };
 
     const getTimeElapsed = (timestamp) => {
-        const now = new Date();
-        const diff = now - new Date(timestamp);
-        if (diff < 60000) return "Active";
-        if (diff < 3600000) return `${Math.floor(diff / 60000)} minute(s) ago`;
-        if (diff < 86400000) return `${Math.floor(diff / 3600000)} hour(s) ago`;
-        if (diff < 604800000) return `${Math.floor(diff / 86400000)} day(s) ago`;
-        return `Last seen on ${new Date(timestamp).toLocaleDateString()}`;
+      const now = new Date();
+      const diff = now - new Date(timestamp);
+      if (diff < 60000) return "Active";
+      if (diff < 3600000) return `${Math.floor(diff / 60000)} minute(s) ago`;
+      if (diff < 86400000) return `${Math.floor(diff / 3600000)} hour(s) ago`;
+      if (diff < 604800000) return `${Math.floor(diff / 86400000)} day(s) ago`;
+      return `Last seen on ${new Date(timestamp).toLocaleDateString()}`;
     };
 
     const loadUsers = () => {
-        const users = JSON.parse(localStorage.getItem("users")) || [];
-        const userTableBody = document.getElementById("user-table-body");
-        userTableBody.innerHTML = "";
-        users.forEach((user, index) => {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td>${user.username}</td>
-                <td>${user.role}</td>
-                <td>${user.lastSeen ? getTimeElapsed(user.lastSeen) : "Never"}</td>
-                <td>${(user.totalTimeSpent / 60).toFixed(2)} min</td>
-                <td><button class="button" onclick="deleteUser(${index})">Delete</button></td>
-            `;
-            userTableBody.appendChild(row);
-        });
+      const users = fetchUsersFromBackend();
+      const userTableBody = document.getElementById("user-table-body");
+      userTableBody.innerHTML = "";
+
+      users.forEach((user, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${user.username}</td>
+          <td>${user.role}</td>
+          <td>${user.lastSeen ? getTimeElapsed(user.lastSeen) : "Never"}</td>
+          <td>${(user.totalTimeSpent / 60).toFixed(2)} min</td>
+          <td><button class="button" onclick="deleteUser(${index})">Delete</button></td>
+        `;
+        userTableBody.appendChild(row);
+      });
     };
 
-    
-  const logout = () => {
-    window.location.href = "index.html";
-  };
+    const deleteUser = (index) => {
+      const users = JSON.parse(localStorage.getItem("users")) || [];
+      if (index >= 0 && index < users.length) {
+        users.splice(index, 1);
+        localStorage.setItem("users", JSON.stringify(users));
+        loadUsers();
+      }
+    };
 
-  // Keep existing functionality
-  window.onload = () => {
-    loadUsers();
-    loadAnnouncements();
-  };
+    const logout = () => {
+      window.location.href = "index.html";
+    };
 
-
-
-   
-  const loadAnnouncements = () => {
+    const loadAnnouncements = () => {
       const announcements = JSON.parse(localStorage.getItem("announcements")) || [];
       const tableBody = document.getElementById("announcement-table-body");
       tableBody.innerHTML = "";
-  
+
       announcements.forEach((announcement, index) => {
         const row = document.createElement("tr");
-  
-        // Format the date
         const formattedDate = new Date(announcement.timestamp).toLocaleString();
-  
-        // Create table row content
-        const contentCell = `<td>${announcement.content || ''}</td>`;
-        const imageCell = `
-          <td>
-            ${announcement.image 
-              ? `<img src="${announcement.image}" alt="Announcement Image" style="max-width: 100px;">`
-              : ''}
-          </td>`;
-        const dateCell = `<td>${formattedDate}</td>`;
-        const actionCell = `
-          <td>
-            <button class="button" onclick="removeAnnouncement(${index})">Remove</button>
-          </td>`;
-  
-        // Append cells to the row
-        row.innerHTML = `${contentCell}${imageCell}${dateCell}${actionCell}`;
+        row.innerHTML = `
+          <td>${announcement.content || ''}</td>
+          <td>${announcement.image ? `<img src="${announcement.image}" alt="Announcement Image" style="max-width: 100px;">` : ''}</td>
+          <td>${formattedDate}</td>
+          <td><button class="button" onclick="removeAnnouncement(${index})">Remove</button></td>
+        `;
         tableBody.appendChild(row);
       });
     };
-  
+
     const addAnnouncement = () => {
       const content = document.getElementById("editor-content").innerHTML.trim();
       const imageUrl = document.getElementById("announcement-image-url").value.trim();
-  
+
       if (!content) {
         alert("Please enter content.");
         return;
       }
-  
+
       const announcements = JSON.parse(localStorage.getItem("announcements")) || [];
       announcements.push({ 
         content: content, 
@@ -283,24 +280,28 @@
       });
       localStorage.setItem("announcements", JSON.stringify(announcements));
       loadAnnouncements();
-  
-      // Clear the input fields after adding an announcement
+
       document.getElementById("editor-content").innerHTML = "";
       document.getElementById("announcement-image-url").value = "";
     };
-  
+
     const removeAnnouncement = (index) => {
       const announcements = JSON.parse(localStorage.getItem("announcements")) || [];
       announcements.splice(index, 1);
       localStorage.setItem("announcements", JSON.stringify(announcements));
       loadAnnouncements();
     };
-  
-    window.onload = () => {
-        loadUsers();
-        loadAnnouncements();
+
+    const closeModal = () => {
+      const modal = document.getElementById("user-modal");
+      modal.style.display = "none";
     };
-</script>
+
+    window.onload = () => {
+      loadUsers();
+      loadAnnouncements();
+    };
+  </script>
 
 </body>
 </html>
